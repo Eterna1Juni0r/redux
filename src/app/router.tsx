@@ -1,9 +1,7 @@
 import { createBrowserRouter, Link, Outlet, redirect } from "react-router";
-import { UsersList } from "../modules/users/users-list";
-import { Counters } from "../modules/counters/counters";
-import { UserInfo } from "./../modules/users/user-info";
 import { store } from "./store";
-import { usersApi } from "./../modules/users/api";
+import { queryClient } from "../shared/api";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 const loadStore = () =>
   new Promise((resolve) => {
@@ -14,13 +12,15 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: (
-      <div className="container p-5 flex flex-col gap-5">
-        <header className="py-5 flex gap-4">
-          <Link to="users">Users</Link>
-          <Link to="counters">Counters</Link>
-        </header>
-        <Outlet />
-      </div>
+      <QueryClientProvider client={queryClient}>
+        <div className="container p-5 flex flex-col gap-5">
+          <header className="py-5 flex gap-4">
+            <Link to="users">Users</Link>
+            <Link to="counters">Counters</Link>
+          </header>
+          <Outlet />
+        </div>
+      </QueryClientProvider>
     ),
     children: [
       {
@@ -29,29 +29,32 @@ export const router = createBrowserRouter([
       },
       {
         path: "users",
-        element: <UsersList />,
-        loader: () => {
-          loadStore().then(async () => {
-            store.dispatch(usersApi.util.prefetch("getUsers", undefined, {}));
-          });
-          return null;
-        },
+        lazy: () =>
+          import("../modules/users").then((m) => ({
+            Component: m.UsersList,
+            loader: () =>
+              loadStore().then(() => {
+                return null;
+              }),
+          })),
       },
       {
         path: "users/:id",
-        element: <UserInfo />,
-        loader: ({ params }) => {
-          loadStore().then(() => {
-            store.dispatch(
-              usersApi.util.prefetch("getUser", params.id ?? "", {})
-            );
-          });
-          return null;
-        },
+        lazy: () =>
+          import("../modules/users").then((m) => ({
+            Component: m.UserInfo,
+            loader: () =>
+              loadStore().then(() => {
+                return null;
+              }),
+          })),
       },
       {
         path: "counters",
-        element: <Counters />,
+        lazy: () =>
+          import("../modules/counters").then((m) => ({
+            Component: m.Counters,
+          })),
       },
     ],
   },

@@ -1,36 +1,34 @@
 import { useNavigate, useParams } from "react-router";
-import type { UserId } from "./users.slice";
-import { usersApi } from "./api";
-import { skipToken } from "@reduxjs/toolkit/query";
-import { useAppDispath, useAppSelector } from "./../../shared/redux";
-import { deleteUser } from "./../../modules/users/modules/delete-user";
+import type { UserId } from "./model/domain";
+import { useAppDispath } from "../../shared/redux";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getUserQueryOptions } from "./api";
+import { deleteUserThunk } from "./model/delete-user";
 
 export function UserInfo() {
   const dispatch = useAppDispath();
   const navigate = useNavigate();
   const { id } = useParams<{ id: UserId }>();
 
-  const { data: user, isLoading: isLoadingUser } = usersApi.useGetUserQuery(
-    id ?? skipToken
-  );
+  const { data: user } = useQuery({
+    ...getUserQueryOptions(id ?? ""),
+    enabled: Boolean(id),
+  });
 
-  const isLoadingDelete = useAppSelector(
-    (state) =>
-      usersApi.endpoints.deleteUser.select(id ?? skipToken)(state).isLoading
-  );
+  const deleteUserMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) {
+        return;
+      }
+      await dispatch(deleteUserThunk(id));
+    },
+  });
 
   const handleBackButtonClick = () => {
     navigate("..", { relative: "path" });
   };
 
-  const handleDeleteButtonClick = async () => {
-    if (!id) {
-      return;
-    }
-    await dispatch(deleteUser(id));
-  };
-
-  if (isLoadingUser || !user) {
+  if (!user) {
     return <div>Loading...</div>;
   }
 
@@ -45,9 +43,9 @@ export function UserInfo() {
       <h2 className="text-3xl">{user.name}</h2>
       <p className="text-xl">{user.description}</p>
       <button
-        onClick={handleDeleteButtonClick}
+        onClick={() => deleteUserMutation.mutate()}
+        disabled={deleteUserMutation.isPending}
         className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-        disabled={isLoadingDelete}
       >
         Delete
       </button>
