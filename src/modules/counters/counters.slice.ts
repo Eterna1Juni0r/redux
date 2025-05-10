@@ -1,5 +1,5 @@
 import { createAction, createReducer } from "@reduxjs/toolkit";
-import type { AppState } from "../../store.ts";
+import type { AppState } from "../../shared/redux";
 
 type CounterState = {
   counter: number;
@@ -34,7 +34,7 @@ export const countersReducer = createReducer(
       if (!state[counterId]) {
         state[counterId] = initialCounterState;
       }
-      state[counterId].counter--;
+      state[counterId].counter++;
     });
   }
 );

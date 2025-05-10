@@ -1,4 +1,4 @@
-import { useAppSelector } from "../../store.ts";
+import { useAppSelector } from "./../../shared/redux";
 import type { CounterId } from "./counters.slice";
 import {
   selectCounter,
@@ -15,7 +15,8 @@ export function Counters() {
     </div>
   );
 }
-function Counter({ counterId }: { counterId: CounterId }) {
+
+export function Counter({ counterId }: { counterId: CounterId }) {
   const dispatch = useDispatch();
   const counterState = useAppSelector((state) =>
     selectCounter(state, counterId)
